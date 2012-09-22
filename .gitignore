@@ -1,0 +1,7 @@
+*.conf
+*.bak
+backup/*
+conf/*
+data/*
+logs/*
+tmp/*
