@@ -1,5 +1,6 @@
 *.conf
 *.bak
+*.pyc
 backup/*
 conf/*
 data/*

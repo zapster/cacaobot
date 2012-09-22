@@ -41,7 +41,7 @@ def configure(advanced):
     from supybot.questions import expect, anything, something, yn
     conf.registerPlugin('Bugzilla', True)
     if yn("""This plugin can show data about bug URLs and numbers mentioned
-             in the channel. Do you want this bug snarfer enabled by 
+             in the channel. Do you want this bug snarfer enabled by
              default?""", default=False):
         conf.supybot.plugins.Bugzilla.bugSnarfer.setValue(True)
 
@@ -53,10 +53,10 @@ class ColorString(registry.OnlySomeStrings):
 
 class FormatString(registry.CommaSeparatedListOfStrings):
     Value = ColorString
-    
+
 class ValidInstall(registry.String):
     """You must pick the name of a group from the list of bugzillas."""
-    
+
     def setValue(self, v):
         names  = conf.supybot.plugins.Bugzilla.bugzillas()[:]
         names.append('')
@@ -73,7 +73,7 @@ conf.registerChannelValue(Bugzilla, 'bugSnarfer',
     enabled, such that any Bugzilla URLs and bug ### seen in the channel
     will have their information reported into the channel."""))
 conf.registerGlobalValue(Bugzilla, 'bugSnarferTimeout',
-    registry.PositiveInteger(300, 
+    registry.PositiveInteger(300,
     """Users often say "bug XXX" several times in a row, in a channel.
     If "bug XXX" has been said in the last (this many) seconds, don't
     fetch its data again. If you change the value of this variable, you
@@ -92,30 +92,30 @@ conf.registerGroup(Bugzilla, 'format',
     help="""How various messages should be formatted in terms of bold, colors,
          etc.""")
 conf.registerChannelValue(Bugzilla.format, 'change',
-    FormatString(['teal'], 
+    FormatString([''],
     """When the plugin reports that something has changed on a
                         bug, how should that string be formatted?"""))
 conf.registerChannelValue(Bugzilla.format, 'attachment',
-    FormatString(['green'], 
+    FormatString([''],
     """When the plugin reports the details of an attachment, how should we
     format that string?"""))
 conf.registerChannelValue(Bugzilla.format, 'bug',
-    FormatString(['red'], 
-   """When the plugin reports the details of a bug, how should we format 
+    FormatString([''],
+   """When the plugin reports the details of a bug, how should we format
    that string?"""))
 
 conf.registerChannelValue(Bugzilla, 'queryResultLimit',
-    registry.PositiveInteger(5, 
+    registry.PositiveInteger(5,
     """The number of results to show when using the "query" command."""))
 
-conf.registerGlobalValue(Bugzilla, 'mbox', 
+conf.registerGlobalValue(Bugzilla, 'mbox',
     registry.String('', """A path to the mbox that we should be watching for
     bugmail.""", private=True))
 conf.registerGlobalValue(Bugzilla, 'mboxPollTimeout',
     registry.PositiveInteger(10, """How many seconds should we wait between
     polling the mbox?"""))
 
-conf.registerGroup(Bugzilla, 'messages', orderAlphabetically=True, 
+conf.registerGroup(Bugzilla, 'messages', orderAlphabetically=True,
     help="""Various messages that can be re-formatted as you wish. If a message
             takes a format string, the available format variables are:
             product, component, bug_id, attach_id, and changer)""")
