@@ -847,7 +847,7 @@ class Bugzilla(callbacks.PluginRegexp):
         
     def _formatLine(self, line, channel, type):
         """Implements the 'format' configuration options."""
-        format = self.registryValue('format.%s' % type, channel)
+        """format = self.registryValue('format.%s' % type, channel)
         already_colored = False
         for item in format:
             if item == 'bold':
@@ -859,7 +859,7 @@ class Bugzilla(callbacks.PluginRegexp):
             elif already_colored:
                 line = ircutils.mircColor(line, bg=item)
             elif item != '':
-                line = ircutils.mircColor(line, fg=item)
+                line = ircutils.mircColor(line, fg=item)"""
         return line
 
     def _shouldSayBug(self, bug_id, channel):
