@@ -1,3 +1,0 @@
-[submodule "plugins/ReMo"]
-	path = plugins/ReMo
-	url = git://github.com/LeoMcA/supybot-remo.git
