@@ -47,5 +47,9 @@ Bitbucket = conf.registerPlugin('Bitbucket')
 conf.registerGlobalValue(Bitbucket, 'bitbucketurl',
      registry.String('', """Url to the Bitbucket repository."""))
 
+conf.registerGlobalValue(Bitbucket, 'snarferTimeout',
+    registry.PositiveInteger(300,
+    """Time out for snarfer in seconds."""))
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -28,6 +28,7 @@
 
 ###
 
+from supybot.utils.structures import TimeoutQueue
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -44,6 +45,10 @@ class Bitbucket(callbacks.PluginRegexp):
     threaded = True
     callBefore = ['URL', 'Web']
     unaddressedRegexps = ['snarfPullRequest']
+    def __init__(self, irc):
+        self.__parent = super(Bitbucket, self)
+        self.__parent.__init__(irc)
+        self.timeout_queue = TimeoutQueue(self.registryValue('snarferTimeout'))
 
     def _getResponse(self, id):
         queryurl = self.registryValue('bitbucketurl') + '/pull-request/' + str(id)
@@ -74,7 +79,6 @@ class Bitbucket(callbacks.PluginRegexp):
             self.log.info('Title: ' + title)
 
         tag = soup.find(lambda tag : _find_div_class(tag,'pull-request-status'))
-        self.log.info(str(tag))
         if tag:
             e = tag.find_all('span')
             self.log.info(str(e))
@@ -83,12 +87,11 @@ class Bitbucket(callbacks.PluginRegexp):
                 self.log.info('Status: ' + status)
 
         tag = soup.find(lambda tag: tag.name == 'div' and tag.has_key('class') and 'author' in tag['class'])
-        self.log.info(str(tag))
         if tag:
             for li in tag.find_all('li'):
                 author = str(li.span.string).strip()
                 authors.append(author)
-                self.log.info(author)
+                self.log.info('Author: ' + author)
 
         say = queryurl
         if status:
@@ -96,13 +99,20 @@ class Bitbucket(callbacks.PluginRegexp):
         if title:
             say += '   "' + str(title) + '"'
         if authors:
-            say += '   by '
+            say += '   by'
         for author in authors:
-            say += ' ' + str(author)
+            say += '  ' + str(author)
         return say
 
+    def _check_timeout(self, id):
+        if id in self.timeout_queue:
+            return False
+
+        self.timeout_queue.enqueue(id)
+        return True
+
     def snarfPullRequest(self, irc, msg, match):
-        r"""(?P<type>pull request|pull-request)[\s#]*(?P<id>\d+)"""
+        r"""(?P<type>pull request|pull-request|pullrequest)[\s#]*(?P<id>\d+)"""
         channel = msg.args[0]
         #if not self.registryValue('bugSnarfer', channel): return
 
@@ -113,6 +123,8 @@ class Bitbucket(callbacks.PluginRegexp):
         # Check if the bug has been already snarfed in the last X seconds
         msgs = []
         for id in id_matches:
+            if not self._check_timeout(id):
+                continue
             response = self._getResponse(id)
             if response:
                 msgs.append(response)

@@ -1,1 +1,4 @@
-Insert a description of your plugin here, with any notes, etc. about using it.
+Bitbucket Bot
+
+Features:
+  - Post pull request url+info if it encounters "pull-request #12" or similar in the conversation
