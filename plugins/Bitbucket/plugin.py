@@ -37,6 +37,34 @@ import supybot.callbacks as callbacks
 
 import requests, json
 
+class PullRequest(object):
+    def __init__(self,plugin,data):
+        self.status = data.get('status')
+        if self.status == 'fulfilled':
+            self.status = 'merged'
+        self.title = data.get('title')
+        try:
+            self.author = data.get('user',dict()).get('display_name')
+        except:
+            self.author = None
+        try:
+            self.closed_by = data.get('closed_by',dict()).get('display_name')
+        except:
+            self.closed_by = None
+        self.id = data.get('id')
+        self.reason = data.get('reason')
+        self.weburl = 'https://bitbucket.org/{0}/{1}/pull-request/{2}'.format(
+            plugin.registryValue('accountname'),plugin.registryValue('repo_slug'),self.id)
+
+    def __str__(self):
+        return '{id:0>4}  {url}   {status:<8}   "{title}"  by {author}'.format(
+            id  = self.id,
+            url = self.weburl,
+            status = str(self.status).upper(),
+            title = str(self.title),
+            author = str(self.author)
+        )
+
 class Bitbucket(callbacks.PluginRegexp):
     """Add the help for "@plugin help Bitbucket" here
     This should describe *how* to use this plugin."""
@@ -57,32 +85,7 @@ class Bitbucket(callbacks.PluginRegexp):
         if r.status_code != requests.codes.ok:
             return "pull-request not found: #" + str(id)
 
-        self.log.info(str(r.text))
-        data = r.json()
-
-        status = data.get('status')
-        title = data.get('title')
-        try:
-            author = data.get('user',dict()).get('display_name')
-        except:
-            author = None
-        try:
-            closed_by = data.get('closed_by',dict()).get('display_name')
-        except:
-            closed_by = None
-        reason = data.get('reason')
-        weburl = 'https://bitbucket.org/{0}/{1}/pull-request/{2}'.format(
-            self.registryValue('accountname'),self.registryValue('repo_slug'),id)
-
-        say = weburl
-        if status:
-            say += '   ' + str(status).upper()
-        if title:
-            say += '   "' + str(title) + '"'
-        if author:
-            say += '   by'
-            say += '  ' + str(author)
-        return say
+        return str(PullRequest(self,r.json()))
 
     def _check_timeout(self, id):
         if id in self.timeout_queue:
@@ -90,6 +93,24 @@ class Bitbucket(callbacks.PluginRegexp):
 
         self.timeout_queue.enqueue(id)
         return True
+
+    def open(self, irc, msg, args):
+        """
+        List open pull request."""
+        queryurl = 'https://bitbucket.org/api/2.0/repositories/{0}/{1}/pullrequests'.format(
+            self.registryValue('accountname'),self.registryValue('repo_slug'))
+        r = requests.get(queryurl)
+
+        self.log.info('Getting pull request from %s' % queryurl)
+        if r.status_code != requests.codes.ok:
+            irc.reply("Url not found: " + queryurl)
+            return
+
+        data = r.json()
+        if 'values' in data:
+            for entry in data['values']:
+                irc.reply(str(PullRequest(self,entry)), prefixNick=False)
+
 
     def snarfPullRequest(self, irc, msg, match):
         r"""(?P<type>pull request|pull-request|pullrequest)[\s#]*(?P<id>\d+)"""
