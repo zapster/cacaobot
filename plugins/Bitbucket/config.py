@@ -44,9 +44,10 @@ Bitbucket = conf.registerPlugin('Bitbucket')
 # This is where your configuration variables (if any) should go.  For example:
 # conf.registerGlobalValue(Bitbucket, 'someConfigVariableName',
 #     registry.Boolean(False, """Help for someConfigVariableName."""))
-conf.registerGlobalValue(Bitbucket, 'bitbucketurl',
-     registry.String('', """Url to the Bitbucket repository."""))
-
+conf.registerGlobalValue(Bitbucket, 'accountname',
+     registry.String('', """Bitbucket account name."""))
+conf.registerGlobalValue(Bitbucket, 'repo_slug',
+     registry.String('', """Bitbucket repository name."""))
 conf.registerGlobalValue(Bitbucket, 'snarferTimeout',
     registry.PositiveInteger(300,
     """Time out for snarfer in seconds."""))

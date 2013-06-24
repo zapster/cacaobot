@@ -35,9 +35,7 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 
-from bs4 import BeautifulSoup
-
-import urllib2
+import requests, json
 
 class Bitbucket(callbacks.PluginRegexp):
     """Add the help for "@plugin help Bitbucket" here
@@ -51,56 +49,38 @@ class Bitbucket(callbacks.PluginRegexp):
         self.timeout_queue = TimeoutQueue(self.registryValue('snarferTimeout'))
 
     def _getResponse(self, id):
-        queryurl = self.registryValue('bitbucketurl') + '/pull-request/' + str(id)
+        queryurl = 'https://bitbucket.org/api/2.0/repositories/{0}/{1}/pullrequests/{2}'.format(
+            self.registryValue('accountname'),self.registryValue('repo_slug'),id)
+        r = requests.get(queryurl)
 
         self.log.info('Getting pull request from %s' % queryurl)
-
-        try:
-            pullrequestxml = utils.web.getUrl(queryurl)
-        except utils.web.Error as e:
-            self.log.info(str(e))
+        if r.status_code != requests.codes.ok:
             return "pull-request not found: #" + str(id)
-        if not pullrequestxml:
-            raise callbacks.Error, 'Got empty empty content'
 
-        soup = BeautifulSoup(pullrequestxml)
+        self.log.info(str(r.text))
+        data = r.json()
 
-        status = None
-        title = None
-        authors = []
+        status = data.get('status')
+        title = data.get('title')
+        try:
+            author = data.get('user',dict()).get('display_name')
+        except:
+            author = None
+        try:
+            closed_by = data.get('closed_by',dict()).get('display_name')
+        except:
+            closed_by = None
+        reason = data.get('reason')
+        weburl = 'https://bitbucket.org/{0}/{1}/pull-request/{2}'.format(
+            self.registryValue('accountname'),self.registryValue('repo_slug'),id)
 
-
-        def _find_div_class(tag,clazz):
-            return tag.name == 'div' and tag.has_key('class') and tag['class'][0] == clazz
-
-        tag = soup.find(lambda tag : _find_div_class(tag,'pull-request-title'))
-        if tag:
-            title = str(tag.h1.string).strip()
-            self.log.info('Title: ' + title)
-
-        tag = soup.find(lambda tag : _find_div_class(tag,'pull-request-status'))
-        if tag:
-            e = tag.find_all('span')
-            self.log.info(str(e))
-            if len(e) >=2:
-                status = str(e[1].string).strip()
-                self.log.info('Status: ' + status)
-
-        tag = soup.find(lambda tag: tag.name == 'div' and tag.has_key('class') and 'author' in tag['class'])
-        if tag:
-            for li in tag.find_all('li'):
-                author = str(li.span.string).strip()
-                authors.append(author)
-                self.log.info('Author: ' + author)
-
-        say = queryurl
+        say = weburl
         if status:
             say += '   ' + str(status).upper()
         if title:
             say += '   "' + str(title) + '"'
-        if authors:
+        if author:
             say += '   by'
-        for author in authors:
             say += '  ' + str(author)
         return say
 
